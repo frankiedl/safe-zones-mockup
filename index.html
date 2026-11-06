@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0e0f12">
+<title>Safe Zones Mockup</title>
+<style>
+/* Herramienta de un solo look oscuro, como un monitor de sala de edición */
+:root{
+  color-scheme:dark;
+  --bg:#0e0f12; --panel:#17191e; --panel2:#1f2228; --line:#2b2f37;
+  --text:#e9ebef; --muted:#8b919c; --accent:#ff3d6e; --ok:#3ddc97;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+aside{width:300px;flex:none;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto}
+aside h1{font-size:15px;letter-spacing:.04em;text-transform:uppercase;margin:0;padding:18px 18px 4px}
+aside .sub{color:var(--muted);font-size:12px;padding:0 18px 12px}
+.sec{padding:12px 18px;border-top:1px solid var(--line)}
+.sec h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:600}
+.plats{display:grid;gap:6px}
+.plat{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--panel2);border:1px solid transparent;border-radius:8px;padding:9px 10px;cursor:pointer}
+.plat:hover{border-color:var(--line)}
+.plat.on{border-color:var(--accent);background:#2a1a21}
+.plat .k{margin-left:auto;color:var(--muted);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.plat .dot{width:10px;height:10px;border-radius:50%}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0}
+.row label{color:var(--text)}
+.seg{display:flex;background:var(--panel2);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;background:none;border:0;padding:6px 8px;border-radius:6px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:#343843;color:var(--text)}
+input[type=range]{width:130px;accent-color:var(--accent)}
+.sw{position:relative;width:36px;height:20px;flex:none}
+.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#3a3e48;border-radius:20px;cursor:pointer;transition:.15s}
+.sw span:before{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+.sw input:checked+span{background:var(--accent)}
+.sw input:checked+span:before{transform:translateX(16px)}
+.margins{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.margins label{display:flex;flex-direction:column;font-size:11px;color:var(--muted);gap:3px}
+.margins input{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;width:100%}
+.btn:hover{border-color:#444a55}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btns{display:grid;gap:6px}
+.note{color:var(--muted);font-size:11.5px;margin-top:8px}
+.info{font-size:12px;color:var(--muted)}
+.conf{display:inline-block;border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.shot{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
+.info b{color:var(--text);font-weight:600}
+.warn{color:#ffb547}
+main{flex:1;position:relative;display:flex;flex-direction:column;min-width:0}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;gap:28px;padding:24px;overflow:auto;flex-wrap:wrap;align-content:center}
+.stage.grid{align-items:flex-start}
+.drop{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,61,110,.12);border:3px dashed var(--accent);z-index:20;font-size:22px;font-weight:600;pointer-events:none}
+body.dragging .drop{display:flex}
+.empty{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);color:var(--muted);font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:8px 16px;pointer-events:none;white-space:nowrap}
+.bar{flex:none;display:none;align-items:center;gap:12px;padding:10px 18px;border-top:1px solid var(--line);background:var(--panel)}
+.bar.show{display:flex}
+.bar button{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer;min-width:36px}
+.bar input[type=range]{flex:1;width:auto;min-width:0}
+.bar .time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;min-width:110px;text-align:right}
+
+/* Phone */
+.device{display:flex;flex-direction:column;align-items:center;gap:10px}
+.device .lbl{font-size:12px;color:var(--muted)}
+.phone{position:relative;border-radius:calc(var(--w)*.14);background:#050505;padding:calc(var(--w)*.035);box-shadow:0 0 0 2px #2c2f36,0 0 0 calc(var(--w)*.012) #111,0 30px 80px rgba(0,0,0,.6)}
+.phone.flat{padding:0;border-radius:6px;box-shadow:0 0 0 1px var(--line)}
+.phone .btnL,.phone .btnR{position:absolute;width:4px;background:#2c2f36;border-radius:2px}
+.phone .btnL{left:-5px;top:22%;height:9%}
+.phone .btnR{right:-5px;top:28%;height:14%}
+.phone.flat .btnL,.phone.flat .btnR{display:none}
+.screen{position:relative;width:var(--w);aspect-ratio:9/16;overflow:hidden;background:#000;border-radius:calc(var(--w)*.105)}
+.phone.flat .screen{border-radius:6px}
+.island{position:absolute;top:1.3%;left:50%;transform:translateX(-50%);width:30%;height:3.1%;background:#000;border-radius:99px;z-index:5}
+.phone.flat .island{display:none}
+.media{position:absolute;overflow:hidden;background:#111}
+.media img,.media video{width:100%;height:100%;display:block}
+.media .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:#5c626d;font-size:calc(var(--w)*.04);text-align:center;background:repeating-linear-gradient(45deg,#15171b 0 12px,#191b20 12px 24px)}
+.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.empty{pointer-events:auto;cursor:pointer;color:var(--text)}
+.empty:hover{border-color:var(--accent)}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(5,6,8,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal img{max-height:68vh;max-height:68dvh;width:auto;height:auto;max-width:100%;object-fit:contain;min-height:0;border-radius:8px;box-shadow:0 0 0 1px var(--line);-webkit-touch-callout:default;user-select:auto}
+.modal .mtxt{color:var(--muted);font-size:13px;text-align:center;width:100%;max-width:420px;overflow-wrap:anywhere}
+.modal .mbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.modal .mbtns .btn{width:auto;padding:10px 16px}
+.stage .device .screen{cursor:default}
+.stage.nomedia .device .screen{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (pointer:coarse){
+  .plat{padding:12px}
+  .bar button{min-width:46px;min-height:42px;font-size:16px}
+  .seg button{padding:9px 10px}
+  input[type=range]{height:28px}
+}
+@media (hover:none){ .kbd{display:none} }
+/* Tablet vertical y móvil: escenario arriba, controles debajo */
+@media (max-width:760px){
+  html,body{height:auto}
+  body{flex-direction:column;overflow-x:hidden;overflow-y:auto}
+  main{order:-1;flex:none}
+  .stage{padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));gap:18px;overflow:visible}
+  aside{width:100%;border-right:0;border-top:1px solid var(--line);overflow:visible}
+  aside h1{padding-top:14px}
+  .plats{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .plats::-webkit-scrollbar{display:none}
+  .plat{flex:none;width:auto;white-space:nowrap}
+  .plat .k{display:none}
+  .empty{position:static;transform:none;margin:0 auto 12px;display:block;width:max-content;max-width:calc(100% - 32px);white-space:normal;text-align:center}
+  .bar{position:sticky;bottom:0;z-index:10;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .sizeRow{display:none!important}
+  .bar{gap:8px}
+  .bar .time{min-width:0;font-size:11px}
+  .bar .time .tot{display:none}
+  .drop{position:fixed}
+}
+/* En móvil los selectores de red quedan pegados arriba */
+@media (max-width:760px){
+  .mobPlats{position:sticky;top:0;z-index:11;background:var(--bg);padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+}
+@media (min-width:761px){ .mobPlats{display:none} }
+</style>
+</head>
+<body>
+<aside>
+  <h1>Safe Zones</h1>
+  <div class="sub">Toca la pantalla o arrastra una imagen o un vídeo encima.</div>
+
+  <div class="sec">
+    <h2>Red social</h2>
+    <div class="plats" id="plats"></div>
+  </div>
+
+  <div class="sec">
+    <h2>Vista</h2>
+    <div class="row"><label>Modo</label>
+      <div class="seg" id="viewSeg"><button data-v="single" class="on">Una</button><button data-v="grid">Todas</button></div>
+    </div>
+    <div class="row"><label>Encaje</label>
+      <div class="seg" id="fitSeg"><button data-f="cover" class="on">Rellenar</button><button data-f="contain">Ajustar</button></div>
+    </div>
+    <div class="row"><label for="tUI">Interfaz de la red</label><label class="sw"><input type="checkbox" id="tUI" checked><span></span></label></div>
+    <div class="row"><label for="opUI">Opacidad UI</label><input type="range" id="opUI" min="0" max="100" value="100"></div>
+    <div class="row"><label for="tSafe">Zonas de riesgo</label><label class="sw"><input type="checkbox" id="tSafe" checked><span></span></label></div>
+    <div class="row"><label for="tFrame">Marco de teléfono</label><label class="sw"><input type="checkbox" id="tFrame" checked><span></span></label></div>
+    <div class="row sizeRow"><label for="size">Tamaño</label><input type="range" id="size" min="220" max="560" value="380"></div>
+  </div>
+
+  <div class="sec">
+    <h2>Márgenes seguros (px sobre 1080×1920)</h2>
+    <div class="row"><label>Referencia</label>
+      <div class="seg" id="modeSeg"><button data-m="ads">Anuncios</button><button data-m="org">Orgánico</button></div>
+    </div>
+    <div class="margins">
+      <label>Arriba<input type="number" id="mT" min="0" max="1920"></label>
+      <label>Abajo<input type="number" id="mB" min="0" max="1920"></label>
+      <label>Izquierda<input type="number" id="mL" min="0" max="1080"></label>
+      <label>Derecha<input type="number" id="mR" min="0" max="1080"></label>
+    </div>
+    <div class="note" id="mNote"></div>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="mReset">Restaurar valores</button></div>
+  </div>
+
+  <div class="sec">
+    <h2>Captura real (opcional)</h2>
+    <div class="note" style="margin-top:0">Para precisión total: haz una captura de pantalla de la app en tu móvil y cárgala. Se superpone sobre tu pieza en esta red, en lugar de la interfaz dibujada.</div>
+    <div class="btns" style="margin-top:8px">
+      <button class="btn" id="shotPick">Cargar captura para esta red…</button>
+      <button class="btn" id="shotClear">Quitar captura</button>
+    </div>
+    <div class="row"><label for="shotOp">Opacidad captura</label><input type="range" id="shotOp" min="0" max="100" value="50"></div>
+    <input type="file" id="shotFile" accept="image/*" hidden>
+  </div>
+
+  <div class="sec">
+    <h2>Archivo</h2>
+    <div class="info" id="info">Ningún archivo cargado.</div>
+    <div class="btns" style="margin-top:10px">
+      <button class="btn" id="pick">Abrir archivo…</button>
+      <button class="btn primary" id="exp">Exportar PNG del fotograma</button>
+    </div>
+    <input type="file" id="file" accept="image/*,video/*" hidden>
+    <div class="note kbd">Atajos: 1–6 cambian de red · U interfaz · S zonas · espacio play · ← → fotograma.</div>
+  </div>
+</aside>
+
+<main id="main">
+  <div class="mobPlats"><div class="plats" id="platsM"></div></div>
+  <div class="stage" id="stage"></div>
+  <div class="bar" id="bar">
+    <button id="play">▶</button>
+    <button id="stepB" title="Fotograma anterior">‹</button>
+    <button id="stepF" title="Fotograma siguiente">›</button>
+    <input type="range" id="scrub" min="0" max="1000" value="0">
+    <span class="time" id="time">0:00.00 / 0:00.00</span>
+  </div>
+  <button class="empty" id="empty" type="button">Toca o arrastra aquí tu imagen o vídeo</button>
+  <div class="drop">Suelta para previsualizar</div>
+</main>
+
+<script>
+(() => {
+const W = 1080, H = 1920, FPS = 30;
+
+/* ---------- Icon set (24×24, stroked) ---------- */
+const P = {
+  heart:'M12 20.5s-7.6-4.6-9.6-9.4C1 7.6 3.3 4.3 6.7 4.3c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.4 0 5.7 3.3 4.3 6.8-2 4.8-9.6 9.4-9.6 9.4z',
+  comment:'M20.6 11.6a8.4 8.4 0 0 1-12.4 7.4L3.2 20.6l1.6-4.8A8.4 8.4 0 1 1 20.6 11.6z',
+  send:'M21.5 3 10 13.6M21.5 3l-6.8 18-4.7-7.4L2.6 9.3z',
+  bookmark:'M6.5 3.5h11v17l-5.5-4.3-5.5 4.3z',
+  share:'M13.5 4.5l7.5 7-7.5 7v-4C7.7 14.5 4.8 16.4 3 20c.6-6 3.9-10.2 10.5-11z',
+  camera:'M3 8.5h4l1.6-2.5h6.8L17 8.5h4V19H3zM12 16.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8z',
+  home:'M3.5 10.5 12 3.5l8.5 7V20.5h-5.5v-6h-6v6H3.5z',
+  search:'M10.5 17.5a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM15.6 15.6 21 21',
+  plusbox:'M4 4h16v16H4zM12 8v8M8 12h8',
+  reels:'M3.5 3.5h17v17h-17zM3.5 8.5h17M9 3.5l2.5 5M14.5 3.5l2.5 5M10.5 11.5v6l5-3z',
+  user:'M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4zM4 21c.6-4.2 3.8-6.6 8-6.6s7.4 2.4 8 6.6',
+  dotsV:'M12 5.5v.01M12 12v.01M12 18.5v.01',
+  dotsH:'M5.5 12h.01M12 12h.01M18.5 12h.01',
+  music:'M9 18V5.5l11-2V16M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
+  close:'M5 5l14 14M19 5 5 19',
+  like:'M7.5 10.5v10h-4v-10zM7.5 10.5l4-8c1.7 0 3 1.3 3 3v3.5h5.3c1.2 0 2.1 1.1 1.9 2.3l-1.4 7.4c-.2 1-1 1.8-2 1.8H7.5',
+  dislike:'M16.5 13.5v-10h4v10zM16.5 13.5l-4 8c-1.7 0-3-1.3-3-3V15H4.2c-1.2 0-2.1-1.1-1.9-2.3l1.4-7.4c.2-1 1-1.8 2-1.8h10.8',
+  remix:'M4 8h11l-3-3M20 16H9l3 3M4 8v4M20 16v-4',
+  inbox:'M3.5 12.5l3-8h11l3 8v7h-17zM3.5 12.5h5l1.5 2.5h4l1.5-2.5h5',
+  friends:'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.5-3.6 3-5.6 6.5-5.6s6 2 6.5 5.6M16 4.3a3.5 3.5 0 0 1 0 6.4M18 14.6c2 .6 3.3 2.4 3.6 5.4',
+  messenger:'M12 3C7 3 3 6.8 3 11.5c0 2.6 1.2 4.9 3.2 6.5V21l3-1.6c.9.3 1.8.4 2.8.4 5 0 9-3.8 9-8.5S17 3 12 3zM7 13.5l3.2-3.4 2.3 2 3.5-2.3-3.2 3.4-2.3-2z',
+  globe:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3z',
+  live:'M3 6h18v12H3zM9.5 9.5v5l4.5-2.5z',
+  menu:'M4 7h16M4 12h16M4 17h16',
+  back:'M15 4 7 12l8 8'
+};
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const ic = (n,x,y,s=72,o={}) => `<g transform="translate(${x-s/2} ${y-s/2}) scale(${s/24})"><path d="${P[n]}" fill="${o.fill||'none'}" stroke="${o.stroke||'#fff'}" stroke-width="${o.sw||2}" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+const tx = (x,y,s,size=36,o={}) => `<text x="${x}" y="${y}" font-size="${size}" font-weight="${o.w||500}" fill="${o.fill||'#fff'}" text-anchor="${o.a||'start'}" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Helvetica,Arial,sans-serif"${o.op?` opacity="${o.op}"`:''}${o.it?' font-style="italic"':''}>${esc(s)}</text>`;
+const avatar = (x,y,r,ring) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#9aa3b2"/><circle cx="${x}" cy="${y-r*.18}" r="${r*.36}" fill="#d9dde4"/><path d="M${x-r*.62} ${y+r*.62}a${r*.65} ${r*.5} 0 0 1 ${r*1.24} 0" fill="#d9dde4"/>${ring?`<circle cx="${x}" cy="${y}" r="${r+7}" fill="none" stroke="${ring}" stroke-width="5"/>`:''}`;
+const pill = (x,y,w,h,label,o={}) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${o.rx??h/2}" fill="${o.fill||'none'}" stroke="${o.stroke||'#fff'}" stroke-width="${o.sw??2.5}"/>${tx(x+w/2,y+h/2+(o.size||32)*.36,label,o.size||32,{w:600,a:'middle',fill:o.tfill||'#fff'})}`;
+const shade = (y,h,up) => `<rect x="0" y="${y}" width="${W}" height="${h}" fill="url(#${up?'gU':'gD'})"/>`;
+const statusBar = (dark) => {
+  const c = dark?'#000':'#fff';
+  return tx(110,92,'9:41',44,{w:600,fill:c}) +
+  `<g fill="${c}"><rect x="842" y="70" width="9" height="20" rx="2"/><rect x="857" y="64" width="9" height="26" rx="2"/><rect x="872" y="58" width="9" height="32" rx="2"/><rect x="887" y="52" width="9" height="38" rx="2"/></g>` +
+  `<rect x="922" y="54" width="70" height="36" rx="10" fill="none" stroke="${c}" stroke-width="3" opacity=".5"/><rect x="928" y="60" width="52" height="24" rx="5" fill="${c}"/><rect x="995" y="65" width="5" height="14" rx="2" fill="${c}" opacity=".5"/>`;
+};
+const rightCol = (items, x=990) => items.map(([n,y,label,o]) => ic(n,x,y,o&&o.s||80,o) + (label?tx(x,y+82,label,(o&&o.ls)||32,{w:600,a:'middle'}):'')).join('');
+
+/* ---------- Platforms ----------
+   Coordinates are in a 1080×1920 screen. media = rectangle the content occupies.
+   safe = default margins (px) measured inside the media rectangle. Orientative, editable. */
+const PLATFORMS = [
+  { id:'igreels', name:'Instagram Reels', color:'#e1306c', media:[0,0,W,H], ratio:9/16,
+    safe:{ads:{t:270,b:672,l:65,r:65}, org:{t:280,b:440,l:60,r:170}},
+    src:{ads:['Guía de Meta para anuncios Reels: 14 % arriba, 35 % abajo, 6 % lados. Citada igual por varias fuentes; no he podido abrir la página de Meta.','media'],
+         org:['Estimación propia midiendo la interfaz (Meta no publica valores para orgánico).','baja']},
+    note:'Copy, audio y CTA abajo; columna de acciones a la derecha.',
+    ui(){ return shade(0,330,1)+shade(1280,640,0)+statusBar()+
+      tx(56,232,'Reels',64,{w:700})+ic('camera',1000,212,76)+
+      rightCol([['heart',1090,'48,2 K'],['comment',1290,'1.204'],['send',1480,'3.110'],['dotsH',1640,'',{sw:3}]])+
+      `<rect x="958" y="1716" width="64" height="64" rx="14" fill="#555" stroke="#fff" stroke-width="4"/>`+
+      avatar(96,1520,40)+tx(154,1534,'tu_marca',38,{w:700})+pill(330,1494,140,56,'Seguir',{size:30,rx:16})+
+      tx(56,1618,'Este es el copy del reel, aquí va el texto…',36,{w:400})+tx(830,1618,'más',36,{w:400,op:.7})+
+      ic('music',76,1680,34)+tx(108,1692,'tu_marca · Audio original',32,{w:500})+
+      `<rect x="0" y="1770" width="${W}" height="150" fill="#000"/>`+
+      ic('home',120,1840,72)+ic('search',330,1840,72)+ic('plusbox',540,1840,72)+ic('reels',750,1840,72)+avatar(960,1840,34,'#fff');
+    }},
+  { id:'igstory', name:'Instagram Stories', color:'#f77737', media:[0,0,W,H], ratio:9/16,
+    safe:{ads:{t:270,b:384,l:65,r:65}, org:{t:270,b:384,l:65,r:65}},
+    src:{ads:['Guía de Meta para Stories: 14 % arriba, 20 % abajo, 6 % lados. Algunas fuentes dicen que en 2026 Meta unificó Stories con Reels (35 % abajo); no confirmado.','media'],
+         org:['Mismos valores que anuncios; Meta no publica una guía distinta para orgánico.','media']},
+    note:'Barra de progreso y perfil arriba; caja de respuesta abajo.',
+    ui(){ const segs=[0,1,2].map(i=>`<rect x="${32+i*344}" y="140" width="328" height="6" rx="3" fill="#fff" opacity="${i===0?1:.4}"/>`).join('');
+      return shade(0,320,1)+shade(1560,360,0)+statusBar()+segs+
+      avatar(84,226,40)+tx(140,240,'tu_marca',38,{w:700})+tx(330,240,'2 h',36,{w:400,op:.7})+
+      ic('dotsH',890,226,70,{sw:3})+ic('close',1000,226,62)+
+      pill(40,1764,700,110,'',{stroke:'rgba(255,255,255,.8)'})+tx(86,1832,'Enviar mensaje',38,{w:400,op:.9})+
+      ic('heart',840,1819,80)+ic('send',980,1819,76);
+    }},
+  { id:'igfeed', name:'Instagram Feed 4:5', color:'#c13584', media:[0,420,W,1350], ratio:4/5,
+    safe:{ads:{t:0,b:0,l:34,r:34}, org:{t:0,b:0,l:34,r:34}},
+    src:{ads:['En el feed la interfaz no tapa el post. Los laterales marcan el recorte 3:4 de la cuadrícula del perfil (1012×1350), calculado geométricamente.','alta'],
+         org:['En el feed la interfaz no tapa el post. Los laterales marcan el recorte 3:4 de la cuadrícula del perfil (1012×1350), calculado geométricamente.','alta']},
+    note:'La UI no tapa el post; los márgenes laterales marcan el recorte 3:4 de la cuadrícula del perfil.',
+    ui(){ return `<rect x="0" y="0" width="${W}" height="420" fill="#000"/><rect x="0" y="1770" width="${W}" height="150" fill="#000"/>`+statusBar()+
+      tx(56,236,'Instagram',66,{w:700,it:1})+ic('heart',900,214,74)+ic('messenger',1010,214,74)+
+      avatar(90,350,40,'#e1306c')+tx(152,364,'tu_marca',38,{w:700})+ic('dotsH',1010,350,64,{sw:3})+
+      `<rect x="${W-170}" y="450" width="130" height="60" rx="30" fill="rgba(0,0,0,.55)"/>`+tx(W-105,492,'1/5',32,{w:600,a:'middle'})+
+      ic('heart',80,1845,76)+ic('comment',200,1845,72)+ic('send',320,1845,72)+ic('bookmark',1010,1845,74)+
+      [0,1,2,3,4].map(i=>`<circle cx="${504+i*18}" cy="1845" r="6" fill="${i?'#666':'#3897f0'}"/>`).join('');
+    }},
+  { id:'tiktok', name:'TikTok', color:'#25f4ee', media:[0,0,W,H], ratio:9/16,
+    safe:{ads:{t:240,b:660,l:120,r:120}, org:{t:200,b:334,l:86,r:140}},
+    extra:{ads:[[780,840,1080,1920]]},
+    src:{ads:['Plantilla oficial In-Feed de TikTok Ads (720×1280 ×1,5) más la columna de acciones a la derecha desde y=840. Dato de un tercero que cita la plantilla; no la he podido abrir.','media'],
+         org:['Medición en la app publicada por un tercero; TikTok no publica valores para orgánico.','baja']},
+    note:'Pestañas arriba; texto, música y barra inferior abajo; acciones a la derecha.',
+    ui(){ return shade(0,320,1)+shade(1250,670,0)+statusBar()+
+      ic('live',70,216,64)+tx(440,232,'Siguiendo',42,{w:600,a:'middle',op:.7})+tx(680,232,'Para ti',42,{w:700,a:'middle'})+
+      `<rect x="630" y="252" width="100" height="6" rx="3" fill="#fff"/>`+ic('search',1010,216,68)+
+      avatar(990,960,52)+`<circle cx="990" cy="1018" r="22" fill="#fe2c55"/><path d="M990 1006v24M978 1018h24" stroke="#fff" stroke-width="5" stroke-linecap="round"/>`+
+      rightCol([['heart',1140,'312 K',{fill:'#fff',sw:1}],['comment',1320,'2.481',{fill:'#fff',sw:1}],['bookmark',1490,'18 K',{fill:'#fff',sw:1}],['share',1660,'9.120',{fill:'#fff',sw:1}]])+
+      `<circle cx="990" cy="1830" r="0"/>`+
+      tx(48,1550,'@tu_marca',40,{w:700})+tx(48,1612,'Texto del vídeo con #hashtags de ejemplo',36,{w:400})+
+      ic('music',66,1676,34)+tx(96,1688,'sonido original · tu_marca',32,{w:500})+
+      `<rect x="0" y="1760" width="${W}" height="160" fill="#000"/>`+
+      ic('home',108,1825,64,{fill:'#fff',sw:1})+tx(108,1890,'Inicio',24,{w:500,a:'middle'})+
+      ic('friends',324,1825,64)+tx(324,1890,'Amigos',24,{w:500,a:'middle',op:.8})+
+      `<rect x="482" y="1795" width="116" height="66" rx="16" fill="#25f4ee"/><rect x="498" y="1795" width="116" height="66" rx="16" fill="#fe2c55"/><rect x="490" y="1795" width="116" height="66" rx="16" fill="#fff"/><path d="M548 1810v36M530 1828h36" stroke="#000" stroke-width="6" stroke-linecap="round"/>`+
+      ic('inbox',756,1825,64)+tx(756,1890,'Bandeja',24,{w:500,a:'middle',op:.8})+
+      ic('user',972,1825,64)+tx(972,1890,'Perfil',24,{w:500,a:'middle',op:.8});
+    }},
+  { id:'shorts', name:'YouTube Shorts', color:'#ff0000', media:[0,0,W,H], ratio:9/16,
+    safe:{ads:{t:288,b:672,l:48,r:192}, org:{t:380,b:390,l:60,r:201}},
+    src:{ads:['Plantilla oficial de Google «Universal safe zones» (vertical). Dos fuentes independientes coinciden en estos px; Google los da solo en imagen.','media-alta'],
+         org:['Medición en la app publicada por un tercero; YouTube no publica valores para orgánico.','baja']},
+    note:'Título, canal y botón Suscribirse abajo; acciones a la derecha.',
+    ui(){ return shade(0,300,1)+shade(1200,720,0)+statusBar()+
+      ic('search',780,210,68)+ic('camera',900,210,72)+ic('dotsV',1010,210,70,{sw:3})+
+      rightCol([['like',1010,'87 K',{fill:'#fff',sw:1}],['dislike',1200,'No me gusta',{fill:'#fff',sw:1,ls:25}],['comment',1390,'1,2 K',{fill:'#fff',sw:1}],['share',1580,'Compartir',{fill:'#fff',sw:1}],['remix',1760,'Remix',{sw:2.5}]])+
+      avatar(84,1580,42)+tx(144,1594,'@tu_marca',38,{w:600})+pill(380,1546,236,70,'Suscribirse',{fill:'#fff',stroke:'#fff',tfill:'#000',size:32})+
+      tx(48,1690,'Título del Short que aparece aquí abajo',38,{w:500})+
+      ic('music',64,1764,32)+tx(94,1776,'Sonido original',32,{w:400,op:.85})+
+      `<rect x="0" y="1880" width="${W}" height="6" fill="rgba(255,255,255,.3)"/><rect x="0" y="1880" width="380" height="6" fill="#ff0000"/>`;
+    }},
+  { id:'fbreels', name:'Facebook Reels', color:'#1877f2', media:[0,0,W,H], ratio:9/16,
+    safe:{ads:{t:270,b:672,l:65,r:65}, org:{t:280,b:500,l:60,r:170}},
+    src:{ads:['Meta usa la misma guía para Reels de Facebook e Instagram: 14 % / 35 % / 6 %.','media'],
+         org:['Estimación propia midiendo la interfaz.','baja']},
+    note:'Similar a Instagram Reels, con más texto y botón Seguir en la parte inferior.',
+    ui(){ return shade(0,320,1)+shade(1240,680,0)+statusBar()+
+      ic('back',64,214,64)+tx(130,232,'Reels',56,{w:700})+ic('search',890,214,68)+ic('user',1010,214,72)+
+      rightCol([['like',1100,'21 K'],['comment',1290,'842'],['share',1480,'1,3 K'],['dotsH',1640,'',{sw:3}]])+
+      avatar(96,1560,42)+tx(156,1574,'Tu Marca',38,{w:700})+tx(330,1574,'·',38,{w:700})+tx(356,1574,'Seguir',38,{w:700,fill:'#4599ff'})+
+      tx(56,1650,'Texto del reel en Facebook con algo de copy…',36,{w:400})+
+      ic('globe',72,1716,32)+tx(100,1728,'Público · Audio original',32,{w:400,op:.85})+
+      `<rect x="0" y="1790" width="${W}" height="130" fill="rgba(0,0,0,.6)"/>`+
+      pill(40,1810,1000,88,'',{stroke:'rgba(255,255,255,.4)'})+tx(86,1866,'Añadir comentario…',36,{w:400,op:.8});
+    }}
+];
+
+/* ---------- State ---------- */
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem('sz.'+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem('sz.'+k,JSON.stringify(v)); }catch(e){} }
+};
+const S = {
+  plat: store.get('plat','igreels'), view:'single', fit:'cover',
+  ui:true, op:100, safe:true, frame:true, size: store.get('size',380),
+  margins: store.get('margins2',{}), mode: store.get('mode','ads'),
+  src:null, type:null, name:'', w:0, h:0, dur:0
+};
+const $ = id => document.getElementById(id);
+const plat = id => PLATFORMS.find(p=>p.id===id);
+const mkey = p => p.id+'.'+S.mode;
+const marg = p => Object.assign({}, p.safe[S.mode], S.margins[mkey(p)]||{});
+
+/* ---------- Sidebar ---------- */
+['plats','platsM'].forEach(id=>{
+  $(id).innerHTML = PLATFORMS.map((p,i)=>`<button class="plat" type="button" data-id="${p.id}"><span class="dot" style="background:${p.color}"></span>${p.name}<span class="k">${i+1}</span></button>`).join('');
+  $(id).onclick = e => { const b=e.target.closest('.plat'); if(b) setPlat(b.dataset.id); };
+});
+function setPlat(id){ S.plat=id; store.set('plat',id); if(S.view==='grid'){ S.view='single'; syncSeg(); } render(); }
+function syncSeg(){
+  document.querySelectorAll('#viewSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.view));
+  document.querySelectorAll('#fitSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f===S.fit));
+}
+$('viewSeg').onclick = e => { const b=e.target.closest('button'); if(!b) return; S.view=b.dataset.v; syncSeg(); render(); };
+$('fitSeg').onclick = e => { const b=e.target.closest('button'); if(!b) return; S.fit=b.dataset.f; syncSeg(); applyLook(); };
+$('tUI').onchange = e => { S.ui=e.target.checked; applyLook(); };
+$('opUI').oninput = e => { S.op=+e.target.value; applyLook(); };
+$('tSafe').onchange = e => { S.safe=e.target.checked; applyLook(); };
+$('tFrame').onchange = e => { S.frame=e.target.checked; applyLook(); };
+$('size').value = S.size;
+$('size').oninput = e => { S.size=+e.target.value; store.set('size',S.size); applyLook(); };
+
+function syncMode(){ document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===S.mode)); }
+$('modeSeg').onclick = e => { const b=e.target.closest('button'); if(!b) return; S.mode=b.dataset.m; store.set('mode',S.mode); syncMode(); syncMargins(); refreshOverlays(); };
+syncMode();
+const shots = {}; let shotOp = 50;
+$('shotPick').onclick = () => $('shotFile').click();
+$('shotFile').onchange = e => { const f=e.target.files[0]; if(!f) return; if(shots[S.plat]) URL.revokeObjectURL(shots[S.plat]); shots[S.plat]=URL.createObjectURL(f); e.target.value=''; render(); };
+$('shotClear').onclick = () => { if(shots[S.plat]) URL.revokeObjectURL(shots[S.plat]); delete shots[S.plat]; render(); };
+$('shotOp').oninput = e => { shotOp=+e.target.value; document.querySelectorAll('.shot').forEach(i=>i.style.opacity=shotOp/100); };
+['mT','mB','mL','mR'].forEach((id,i)=>{
+  $(id).oninput = e => {
+    const k='tblr'[i], p=plat(S.plat);
+    S.margins[mkey(p)] = Object.assign({}, S.margins[mkey(p)]||{}, {[k]: Math.max(0, +e.target.value||0)});
+    store.set('margins2',S.margins); refreshOverlays();
+  };
+});
+$('mReset').onclick = () => { delete S.margins[mkey(plat(S.plat))]; store.set('margins2',S.margins); render(); };
+function syncMargins(){
+  const p=plat(S.plat), m=marg(p);
+  $('mT').value=m.t; $('mB').value=m.b; $('mL').value=m.l; $('mR').value=m.r;
+  const inFeed = p.media[3]!==H;
+  const [srcTxt,conf] = p.src[S.mode], edited = !!S.margins[mkey(p)];
+  const cc = {alta:'#3ddc97','media-alta':'#9be36b',media:'#ffb547',baja:'#ff6b6b'}[conf];
+  $('mNote').innerHTML = `<span class="conf" style="border-color:${cc};color:${cc}">Confianza ${conf}</span>${edited?' <span class="conf">Editado por ti</span>':''}<br>${esc(srcTxt)}<br><span style="opacity:.8">${esc(p.note)}${inFeed?' En este formato los márgenes se miden dentro del post (1080×1350).':''}</span>`;
+  document.querySelectorAll('.plat').forEach(b=>b.classList.toggle('on',b.dataset.id===S.plat && S.view==='single'));
+}
+
+/* ---------- Overlay SVG ---------- */
+function overlaySVG(p, withUI, withSafe, op){
+  const [mx,my,mw,mh] = p.media, m = marg(p);
+  const sx=mx+m.l, sy=my+m.t, sw=Math.max(0,mw-m.l-m.r), sh=Math.max(0,mh-m.t-m.b);
+  const safe = withSafe ? `<g>
+    <path fill-rule="evenodd" fill="rgba(255,40,80,.28)" d="M${mx} ${my}h${mw}v${mh}h-${mw}zM${sx} ${sy}v${sh}h${sw}v-${sh}z"/>
+    <rect x="${sx}" y="${sy}" width="${sw}" height="${sh}" fill="none" stroke="#3ddc97" stroke-width="4" stroke-dasharray="18 12"/>
+    <rect x="${sx+8}" y="${sy+8}" width="250" height="48" rx="8" fill="rgba(0,0,0,.6)"/>
+    ${tx(sx+20,sy+42,'ZONA SEGURA',28,{w:700,fill:'#3ddc97'})}
+  </g>` : '';
+  const ex = withSafe ? ((p.extra||{})[S.mode]||[]).map(([x1,y1,x2,y2])=>`<rect x="${x1}" y="${y1}" width="${x2-x1}" height="${Math.min(y2,my+mh-m.b)-y1}" fill="rgba(255,40,80,.28)" stroke="#ff2850" stroke-width="3" stroke-dasharray="10 8"/>`).join('') : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+    <defs>
+      <linearGradient id="gU" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+      <linearGradient id="gD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+      <filter id="sh" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity=".45"/></filter>
+    </defs>
+    ${safe}${ex}
+    ${withUI?`<g filter="url(#sh)" opacity="${op/100}">${p.ui()}</g>`:''}
+  </svg>`;
+}
+
+/* ---------- Devices ---------- */
+let videos = [];
+function deviceEl(p){
+  const d=document.createElement('div'); d.className='device'; d.dataset.id=p.id;
+  const [mx,my,mw,mh]=p.media;
+  d.innerHTML = `<div class="phone"><span class="btnL"></span><span class="btnR"></span>
+      <div class="screen">
+        <div class="media" style="left:${mx/W*100}%;top:${my/H*100}%;width:${mw/W*100}%;height:${mh/H*100}%"></div>
+        ${shots[p.id]?`<img class="shot" src="${shots[p.id]}" style="opacity:${shotOp/100}" alt="">`:''}<div class="ov"></div><div class="island"></div>
+      </div></div><div class="lbl">${p.name}</div>`;
+  const media=d.querySelector('.media');
+  if(S.src){
+    if(S.type==='video'){
+      const v=document.createElement('video'); v.src=S.src; v.muted=true; v.defaultMuted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline',''); v.setAttribute('muted',''); v.preload='auto';
+      media.appendChild(v); videos.push(v);
+    } else { const im=new Image(); im.src=S.src; im.alt=S.name; media.appendChild(im); }
+  } else {
+    media.innerHTML = `<div class="ph"><div>Toca o arrastra aquí</div><div style="opacity:.7">${p.ratio===4/5?'1080 × 1350':'1080 × 1920'}</div></div>`;
+  }
+  if(S.view==='grid') d.style.cursor='pointer', d.onclick=()=>setPlat(p.id);
+  return d;
+}
+function render(){
+  const stage=$('stage'), t = videos[0] ? videos[0].currentTime : 0, playing = videos[0] && !videos[0].paused;
+  videos.forEach(v=>{ v.pause(); v.removeAttribute('src'); v.load(); });
+  videos=[]; stage.innerHTML=''; stage.classList.toggle('grid',S.view==='grid'); stage.classList.toggle('nomedia',!S.src);
+  const list = S.view==='grid' ? PLATFORMS : [plat(S.plat)];
+  list.forEach(p=>stage.appendChild(deviceEl(p)));
+  videos.forEach(v=>{ v.addEventListener('loadedmetadata',()=>{ try{ v.currentTime=t; }catch(e){} if(playing) v.play().catch(()=>{}); },{once:true}); });
+  syncMargins(); refreshOverlays(); applyLook();
+}
+function refreshOverlays(){
+  document.querySelectorAll('.device').forEach(d=>{
+    d.querySelector('.ov').innerHTML = overlaySVG(plat(d.dataset.id), S.ui && !shots[d.dataset.id], S.safe, S.op).replace('<svg ','<svg class="ov" preserveAspectRatio="none" ');
+  });
+}
+function applyLook(){
+  const st=$('stage'), mob=window.matchMedia('(max-width:760px)').matches;
+  const sw=st.clientWidth-32, frameK=S.frame?1.1:1.0;
+  const availH = mob ? window.innerHeight*0.72 - 40 : st.clientHeight-70;
+  let w;
+  if(S.view==='grid'){
+    const cols=Math.max(1,Math.min(3,Math.floor(sw/(mob?170:250))));
+    const byW = (sw-(cols-1)*18)/cols/frameK;
+    const byH = mob ? Infinity : ((availH-(Math.ceil(PLATFORMS.length/cols)-1)*40)/Math.ceil(PLATFORMS.length/cols))*9/16/frameK;
+    w = Math.max(140, Math.min(S.size, byW, byH));
+  } else {
+    w = Math.max(160, Math.min(mob?560:S.size, sw/frameK, availH*9/16/frameK));
+  }
+  document.querySelectorAll('.device').forEach(d=>{
+    d.querySelector('.phone').classList.toggle('flat',!S.frame);
+    d.querySelector('.screen').style.setProperty('--w',w+'px');
+    d.querySelector('.phone').style.setProperty('--w',w+'px');
+    d.querySelectorAll('.media img,.media video').forEach(m=>m.style.objectFit=S.fit);
+  });
+  refreshOverlays(); updateInfo();
+}
+
+/* ---------- File loading ---------- */
+function load(file){
+  if(!file || !/^(image|video)\//.test(file.type)) return;
+  if(S.src) URL.revokeObjectURL(S.src);
+  S.src=URL.createObjectURL(file); S.type=file.type.startsWith('video')?'video':'image'; S.name=file.name; S.w=S.h=S.dur=0;
+  const probe = S.type==='video' ? document.createElement('video') : new Image();
+  const done = () => { S.w=probe.videoWidth||probe.naturalWidth; S.h=probe.videoHeight||probe.naturalHeight; S.dur=probe.duration||0; updateInfo(); };
+  if(S.type==='video'){ probe.preload='metadata'; probe.onloadedmetadata=done; probe.src=S.src; } else { probe.onload=done; probe.src=S.src; }
+  $('empty').hidden=true; $('bar').classList.toggle('show',S.type==='video');
+  render();
+  if(S.type==='video') setTimeout(()=>playAll(true),100);
+}
+function updateInfo(){
+  if(!S.src){ $('info').textContent='Ningún archivo cargado.'; return; }
+  const p = S.view==='grid'?null:plat(S.plat);
+  let html = `<b>${esc(S.name)}</b><br>${S.type==='video'?'Vídeo':'Imagen'}${S.w?` · ${S.w}×${S.h}`:''}${S.dur?` · ${S.dur.toFixed(2)} s`:''}`;
+  if(S.w && p){
+    const r=S.w/S.h, diff=Math.abs(r-p.ratio)/p.ratio;
+    const want = p.ratio===4/5?'4:5 (1080×1350)':'9:16 (1080×1920)';
+    html += diff>0.01 ? `<br><span class="warn">Esta red espera ${want}. Con “${S.fit==='cover'?'Rellenar':'Ajustar'}” ${S.fit==='cover'?'se recortan bordes':'aparecen bandas'}.</span>` : `<br><span style="color:var(--ok)">Proporción correcta para ${p.name}.</span>`;
+    if(S.w < (p.ratio===4/5?1080:1080)) html += `<br><span class="warn">Resolución por debajo de 1080 px de ancho.</span>`;
+  }
+  $('info').innerHTML = html;
+}
+$('pick').onclick = () => $('file').click();
+$('empty').onclick = () => $('file').click();
+$('stage').addEventListener('click', e => { if(!S.src && S.view==='single' && e.target.closest('.screen')) $('file').click(); });
+$('file').onchange = e => load(e.target.files[0]);
+let dragN=0;
+window.addEventListener('dragenter',e=>{ e.preventDefault(); dragN++; document.body.classList.add('dragging'); });
+window.addEventListener('dragleave',e=>{ dragN=Math.max(0,dragN-1); if(!dragN) document.body.classList.remove('dragging'); });
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>{ e.preventDefault(); dragN=0; document.body.classList.remove('dragging'); load(e.dataTransfer.files[0]); });
+
+/* ---------- Video transport ---------- */
+const fmt = s => { s=Math.max(0,s||0); const m=Math.floor(s/60); return `${m}:${(s%60).toFixed(2).padStart(5,'0')}`; };
+function playAll(on){ videos.forEach(v=> on? v.play().catch(()=>{}) : v.pause()); $('play').textContent = on?'❚❚':'▶'; }
+function seek(t){ videos.forEach(v=>{ try{ v.currentTime=Math.max(0,Math.min(t,(v.duration||t)-0.001)); }catch(e){} }); }
+$('play').onclick = () => playAll(!(videos[0] && !videos[0].paused));
+$('stepB').onclick = () => { playAll(false); seek((videos[0]?.currentTime||0)-1/FPS); };
+$('stepF').onclick = () => { playAll(false); seek((videos[0]?.currentTime||0)+1/FPS); };
+let scrubbing=false;
+$('scrub').oninput = e => { scrubbing=true; const d=videos[0]?.duration||0; seek(d*e.target.value/1000); };
+$('scrub').onchange = () => scrubbing=false;
+(function tick(){
+  const v=videos[0];
+  if(v && v.duration){
+    if(!scrubbing) $('scrub').value = v.currentTime/v.duration*1000;
+    $('time').innerHTML = `${fmt(v.currentTime)}<span class="tot"> / ${fmt(v.duration)}</span>`;
+    for(let i=1;i<videos.length;i++) if(Math.abs(videos[i].currentTime-v.currentTime)>0.08 && !v.paused) videos[i].currentTime=v.currentTime;
+  }
+  requestAnimationFrame(tick);
+})();
+
+/* ---------- Keyboard ---------- */
+window.addEventListener('keydown',e=>{
+  if(e.target.matches('input[type=number]')) return;
+  const n=+e.key;
+  if(n>=1 && n<=PLATFORMS.length){ setPlat(PLATFORMS[n-1].id); }
+  else if(e.key==='u'||e.key==='U'){ $('tUI').click(); }
+  else if(e.key==='s'||e.key==='S'){ $('tSafe').click(); }
+  else if(e.key===' ' && videos.length){ e.preventDefault(); $('play').click(); }
+  else if(e.key==='ArrowLeft' && videos.length){ e.preventDefault(); $('stepB').click(); }
+  else if(e.key==='ArrowRight' && videos.length){ e.preventDefault(); $('stepF').click(); }
+});
+
+/* ---------- Export PNG (1080×1920, current frame + overlay) ---------- */
+function drawFit(ctx, el, sw, sh, x, y, w, h, fit){
+  const r = fit==='cover' ? Math.max(w/sw, h/sh) : Math.min(w/sw, h/sh);
+  const dw=sw*r, dh=sh*r;
+  ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
+  ctx.fillStyle='#111'; ctx.fillRect(x,y,w,h);
+  ctx.drawImage(el, x+(w-dw)/2, y+(h-dh)/2, dw, dh); ctx.restore();
+}
+$('exp').onclick = async () => {
+  const p = plat(S.plat);
+  const c=document.createElement('canvas'); c.width=W; c.height=H; const ctx=c.getContext('2d');
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  const [mx,my,mw,mh]=p.media;
+  const dev = document.querySelector(`.device[data-id="${p.id}"]`);
+  const el = dev && dev.querySelector('.media img,.media video');
+  if(el){ const sw=el.videoWidth||el.naturalWidth, sh=el.videoHeight||el.naturalHeight; if(sw) drawFit(ctx,el,sw,sh,mx,my,mw,mh,S.fit); }
+  if(shots[p.id]){ const si=new Image(); await new Promise(r=>{ si.onload=r; si.onerror=r; si.src=shots[p.id]; }); ctx.globalAlpha=shotOp/100; ctx.drawImage(si,0,0,W,H); ctx.globalAlpha=1; }
+  const svg = new Blob([overlaySVG(p,S.ui && !shots[p.id],S.safe,S.op)],{type:'image/svg+xml'});
+  const url = URL.createObjectURL(svg);
+  const img = new Image();
+  await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; }).catch(()=>{});
+  ctx.drawImage(img,0,0,W,H); URL.revokeObjectURL(url);
+  const t = videos[0] ? '_' + videos[0].currentTime.toFixed(2).replace('.','-') + 's' : '';
+  const base = (S.name||'mockup').replace(/\.[^.]+$/,'');
+  c.toBlob(b=>showExport(b, `${base}_${p.id}${t}.png`),'image/png');
+};
+
+let rz; window.addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(applyLook,80); });
+window.addEventListener('orientationchange',()=>setTimeout(applyLook,250));
+function showExport(blob, name){
+  const url=URL.createObjectURL(blob), touch=window.matchMedia('(hover:none)').matches;
+  let framed=false; try{ framed = window.self!==window.top; }catch(e){ framed=true; }
+  const m=document.createElement('div'); m.className='modal';
+  m.innerHTML=`<img alt="Fotograma exportado" src="${url}">
+    <div class="mtxt">${touch?'Mantén pulsada la imagen y elige «Guardar en Fotos» o «Guardar imagen».':'Clic derecho en la imagen y «Guardar imagen como…», o usa Descargar.'}</div>
+    <div class="mbtns">${framed?'':'<button class="btn primary" type="button" data-a="dl">Descargar PNG</button>'}<button class="btn" type="button" data-a="close">Cerrar</button></div>`;
+  m.onclick=e=>{
+    const a=e.target.closest('[data-a]');
+    if(e.target===m || (a && a.dataset.a==='close')){ m.remove(); URL.revokeObjectURL(url); }
+    else if(a && a.dataset.a==='dl'){ const l=document.createElement('a'); l.href=url; l.download=name; document.body.appendChild(l); l.click(); l.remove(); }
+  };
+  document.body.appendChild(m);
+}
+render();
+})();
+</script>
+</body>
+</html>
